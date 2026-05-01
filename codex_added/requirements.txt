@@ -1,0 +1,21 @@
+# Added by Codex: local project dependencies; not part of the original starter repository.
+
+# Core evaluation and prompting workflow.
+accelerate==1.13.0
+antlr4-python3-runtime==4.11.1
+peft==0.15.2
+numpy
+PyYAML
+sympy
+tqdm
+transformers==4.57.3
+trl==0.19.1
+
+# DataHub already provides a CUDA-enabled torch build. Install torch separately
+# only if your environment does not already have it.
+
+# Optional later-stage packages:
+# bitsandbytes
+# vllm
+# ipykernel
+# jupyter

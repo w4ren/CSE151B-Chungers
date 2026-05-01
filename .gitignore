@@ -3,4 +3,8 @@
 results
 data
 __pycache__
-LICENSE
+codex_added/data
+codex_added/models
+codex_added/results
+codex_added/submissions/*.csv
+*.pyc
