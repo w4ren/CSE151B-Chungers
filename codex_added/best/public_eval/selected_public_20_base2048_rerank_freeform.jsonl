@@ -1,0 +1,20 @@
+{"id": 0, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{105950}", "gold": ["325*(1+325)"], "correct": true, "answer_key": "105950", "selected_source": "override"}
+{"id": 1, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{F}", "gold": "F", "correct": true, "answer_key": "F", "selected_source": "base"}
+{"id": 2, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{143.2}", "gold": ["143.224229233795", "2.32624773420025"], "correct": false, "answer_key": "143.2", "selected_source": "override"}
+{"id": 3, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{5/8}", "gold": ["5/8"], "correct": true, "answer_key": "\\frac{5}{8}", "selected_source": "override"}
+{"id": 4, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{C}", "gold": "C", "correct": true, "answer_key": "C", "selected_source": "base"}
+{"id": 5, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{62.7777777777778, 335.927777777778, 604.67}", "gold": ["62.7777777777778", "335.927777777778", "604.67"], "correct": true, "answer_key": "62.7777777777778, 335.927777777778, 604.67", "selected_source": "override"}
+{"id": 6, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{G, B}", "gold": ["G", "B"], "correct": true, "answer_key": "G, B", "selected_source": "override"}
+{"id": 7, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{13/9}", "gold": ["1.44444444444444"], "correct": true, "answer_key": "\\frac{13}{9}", "selected_source": "override"}
+{"id": 8, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{0.4467}", "gold": ["(1/2)^[(1999-1963)/31]"], "correct": false, "answer_key": "0.4467", "selected_source": "override"}
+{"id": 9, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{A}", "gold": "A", "correct": true, "answer_key": "A", "selected_source": "base"}
+{"id": 10, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{F}", "gold": "E", "correct": false, "answer_key": "F", "selected_source": "base"}
+{"id": 11, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{F}", "gold": "G", "correct": false, "answer_key": "F", "selected_source": "base"}
+{"id": 12, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{380, 315, 14, 310}", "gold": ["380", "315", "13", "310"], "correct": false, "answer_key": "380, 315, 14, 310", "selected_source": "override"}
+{"id": 13, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{J}", "gold": "J", "correct": true, "answer_key": "J", "selected_source": "base"}
+{"id": 14, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{E}", "gold": "F", "correct": false, "answer_key": "E", "selected_source": "base"}
+{"id": 15, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{B, C, A}", "gold": ["B", "C", "A"], "correct": true, "answer_key": "B, C, A", "selected_source": "override"}
+{"id": 16, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{1.357, 3.1416}", "gold": ["atan(4.76)", "pi"], "correct": false, "answer_key": "1.357, 3.1416", "selected_source": "override"}
+{"id": 17, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{16*x, 16*x}", "gold": ["2*8*x", "2*8*x"], "correct": true, "answer_key": "16*x, 16*x", "selected_source": "override"}
+{"id": 18, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{I}", "gold": "I", "correct": true, "answer_key": "I", "selected_source": "base"}
+{"id": 19, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{E}", "gold": "E", "correct": true, "answer_key": "E", "selected_source": "base"}

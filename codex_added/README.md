@@ -9,11 +9,16 @@ The starter files at the repo root are unchanged.
 
 ```text
 codex_added/
+  best/          Current best 13/20 method, run scripts, K8s manifest, public eval artifacts
+  second_best/   Simpler 2048-pass + LoRA finalizer method
+  third_best/    Conflict-only rerank + LoRA finalizer method
+  archive/       Old generated results, non-current adapters, generated training data
   configs/        Baseline model and generation config
-  data/           Derived training datasets
   docs/           Getting-started workflow notes
   math_comp/      Reusable data, prompt, inference, scoring, and submission code
-  results/        Local generated JSONL outputs
+  models/         Current answer-format LoRA adapter
+  job_data/       Ignored generated JSONL chunks for multi-job runs
+  results/        Fresh run outputs; historical outputs are archived
   scripts/        CLI entry points
   submissions/    Local generated CSV submissions
   requirements.txt
@@ -22,16 +27,46 @@ codex_added/
 ## Common Commands
 
 ```bash
-python codex_added/scripts/analyze_public.py --data data/public.jsonl
-python codex_added/scripts/10_run_prompt_sweep.py --input data/public.jsonl --output codex_added/results/sweep_smoke.jsonl --limit 5 --variants final_box_only --num-samples 1 --do-sample --quantization none --max-new-tokens 2048 --batch-size 1
-python codex_added/scripts/11_vote_self_consistency.py --data data/public.jsonl --responses codex_added/results/sweep_smoke.jsonl --output codex_added/results/voted_smoke.jsonl --score
-python codex_added/scripts/12_build_answer_format_sft.py --public data/public.jsonl --output codex_added/data/sft_answer_format.jsonl
-python codex_added/scripts/13_train_lora_sft.py --train codex_added/data/sft_answer_format.jsonl --output-dir codex_added/models/qwen3_answer_format_lora --max-examples 32 --epochs 1
-python codex_added/scripts/14_train_grpo_public_reward.py --public data/public.jsonl --output-dir codex_added/models/qwen3_grpo_public_smoke --init-adapter-dir codex_added/models/qwen3_answer_format_lora --max-examples 8 --max-steps 5 --assistant-mode direct --num-generations 4 --logging-steps 10 --no-gradient-checkpointing
-python codex_added/scripts/16_finalize_with_qwen.py --data data/public.jsonl --responses codex_added/results/sweep_smoke.jsonl --output codex_added/results/finalized_smoke.jsonl --adapter-dir codex_added/models/qwen3_answer_format_lora --score
-python codex_added/scripts/17_rerank_with_qwen.py --data data/public.jsonl --responses codex_added/results/finalized_a.jsonl codex_added/results/finalized_b.jsonl --output codex_added/results/reranked.jsonl --only-conflicts
-python codex_added/scripts/18_select_predictions.py --data data/public.jsonl --base codex_added/results/finalized_a.jsonl --override codex_added/results/reranked.jsonl --output codex_added/results/selected.jsonl --policy free_form_override --score
-LIMIT=20 SCORE=1 codex_added/scripts/19_run_best_pipeline.sh data/public.jsonl codex_added/results/best_public_20 codex_added/submissions/best_public_20.csv
+codex_added/best/run.sh data/private.jsonl codex_added/results/best_private codex_added/submissions/best_submission.csv
+codex_added/best/run_8gpu.sh data/private.jsonl codex_added/results/best_private_8gpu codex_added/submissions/best_submission.csv
+codex_added/second_best/run.sh data/private.jsonl codex_added/results/second_best_private codex_added/submissions/second_best_submission.csv
+codex_added/third_best/run.sh data/private.jsonl codex_added/results/third_best_private codex_added/submissions/third_best_submission.csv
+```
+
+Kubernetes manifests for the 2-job, 4-GPU-per-job setup are in `codex_added/best/k8s/cse151b-best-2x4gpu.yaml`.
+
+For two scheduler jobs with four GPUs each, split the data first, then run the same job script/spec shape on each chunk. If the scheduler remaps each job's allocated GPUs to `0,1,2,3`, use `GPUS=0,1,2,3` in both jobs.
+
+```bash
+python codex_added/scripts/22_split_jsonl_for_jobs.py \
+  --data data/private.jsonl \
+  --out-dir codex_added/job_data \
+  --prefix private \
+  --num-jobs 2
+
+GPUS=0,1,2,3 NUM_SHARDS=4 WRITE_SUBMISSION=0 \
+  codex_added/scripts/20_run_best_pipeline_8gpu.sh \
+  codex_added/job_data/private_job0.jsonl \
+  codex_added/results/best_private_job0 \
+  codex_added/submissions/best_submission_job0_unused.csv
+
+GPUS=0,1,2,3 NUM_SHARDS=4 WRITE_SUBMISSION=0 \
+  codex_added/scripts/20_run_best_pipeline_8gpu.sh \
+  codex_added/job_data/private_job1.jsonl \
+  codex_added/results/best_private_job1 \
+  codex_added/submissions/best_submission_job1_unused.csv
+
+python codex_added/scripts/21_merge_shard_predictions.py \
+  --data data/private.jsonl \
+  --output codex_added/results/best_private_merged/selected.jsonl \
+  --predictions \
+  codex_added/results/best_private_job0/selected.jsonl \
+  codex_added/results/best_private_job1/selected.jsonl
+
+python codex_added/scripts/make_submission.py \
+  --data data/private.jsonl \
+  --predictions codex_added/results/best_private_merged/selected.jsonl \
+  --output codex_added/submissions/best_submission.csv
 ```
 
 See `docs/GETTING_STARTED.md` for the fuller workflow.
