@@ -41,6 +41,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--max-examples", type=int, default=64, help="Limit public examples for a first run.")
     parser.add_argument("--offset", type=int, default=0, help="Skip first N public examples.")
+    parser.add_argument(
+        "--exclude-ids-file",
+        default=None,
+        help="Optional JSON/list/text file of public ids to exclude before offset and max_examples.",
+    )
     parser.add_argument("--max-steps", type=int, default=20, help="GRPO optimizer steps.")
     parser.add_argument("--num-generations", type=int, default=2, help="Completions per prompt group.")
     parser.add_argument("--max-prompt-length", type=int, default=1024, help="Token budget for prompts.")
@@ -65,6 +70,28 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def read_exclude_ids(path: str | None) -> set[int]:
+    if not path:
+        return set()
+    text = Path(path).read_text(encoding="utf-8").strip()
+    if not text:
+        return set()
+
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict):
+            if "ordered_selected_ids" in data:
+                return {int(x) for x in data["ordered_selected_ids"]}
+            if "ids" in data:
+                return {int(x) for x in data["ids"]}
+        if isinstance(data, list):
+            return {int(x) for x in data}
+    except json.JSONDecodeError:
+        pass
+
+    return {int(line.strip()) for line in text.splitlines() if line.strip()}
+
+
 def build_problem_text(item: dict[str, Any]) -> str:
     question = str(item["question"])
     if item.get("options"):
@@ -87,10 +114,13 @@ def build_dataset(
     max_examples: int | None,
     tokenizer: Any,
     assistant_mode: str,
+    exclude_ids: set[int] | None = None,
 ) -> Dataset:
     variant = get_variant(variant_name)
     rows: list[dict[str, Any]] = []
     items = [item for item in read_jsonl(path) if has_gold(item)]
+    if exclude_ids:
+        items = [item for item in items if int(item["id"]) not in exclude_ids]
     if offset:
         items = items[offset:]
     if max_examples is not None:
@@ -241,7 +271,16 @@ def main() -> None:
         args.max_completion_length = min(args.max_completion_length, 256)
 
     tokenizer = load_tokenizer(args.model_id)
-    dataset = build_dataset(args.public, args.variant, args.offset, args.max_examples, tokenizer, args.assistant_mode)
+    exclude_ids = read_exclude_ids(args.exclude_ids_file)
+    dataset = build_dataset(
+        args.public,
+        args.variant,
+        args.offset,
+        args.max_examples,
+        tokenizer,
+        args.assistant_mode,
+        exclude_ids,
+    )
     model = load_trainable_model(args.model_id, args.init_adapter_dir)
 
     peft_config = None
@@ -311,6 +350,8 @@ def main() -> None:
         "max_prompt_length": args.max_prompt_length,
         "max_completion_length": args.max_completion_length,
         "init_adapter_dir": args.init_adapter_dir,
+        "exclude_ids_file": args.exclude_ids_file,
+        "excluded_id_count": len(exclude_ids),
     }
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     (Path(args.output_dir) / "codex_grpo_metadata.json").write_text(

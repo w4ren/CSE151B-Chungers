@@ -36,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--top-p", type=float, default=None, help="Override nucleus sampling p.")
     parser.add_argument("--top-k", type=int, default=None, help="Override top-k sampling.")
     parser.add_argument("--do-sample", action="store_true", help="Enable stochastic sampling.")
+    parser.add_argument("--model-id", default=None, help="Override model id or local model path.")
     parser.add_argument("--quantization", default=None, help="Override model quantization, e.g. none or 4bit.")
     parser.add_argument("--adapter-dir", default=None, help="Optional PEFT/LoRA adapter directory.")
     parser.add_argument(
@@ -61,6 +62,8 @@ def update_config(config: dict[str, Any], args: argparse.Namespace) -> dict[str,
     gen_config = config.setdefault("generation", {})
     model_config["backend"] = "transformers"
 
+    if args.model_id is not None:
+        model_config["id"] = args.model_id
     if args.quantization is not None:
         model_config["quantization"] = args.quantization
     if args.adapter_dir is not None:

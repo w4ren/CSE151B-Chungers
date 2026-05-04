@@ -1,0 +1,13 @@
+{
+  "exclude_ids_file": "codex_added/job_data/public_stratified_40_ids.txt",
+  "excluded_id_count": 40,
+  "init_adapter_dir": "codex_added/models/qwen3_answer_format_lora",
+  "max_completion_length": 128,
+  "max_examples": 256,
+  "max_prompt_length": 512,
+  "max_steps": 60,
+  "model_id": "/home/mnt/BiomechAI/Wenhao/archive2/CSE151B-Chungers-wenhao/.hf_cache/transformers/models--Qwen--Qwen3-4B-Thinking-2507/snapshots/768f209d9ea81521153ed38c47d515654e938aea",
+  "num_generations": 2,
+  "public": "data/public.jsonl",
+  "variant": "final_box_only"
+}

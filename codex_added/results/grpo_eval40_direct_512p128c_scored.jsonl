@@ -1,0 +1,40 @@
+{"id": 20, "is_mcq": false, "response": "</think>\n\n\\boxed{-1.928, 3.718, -0.928, 0.372, 10.072, 101.445, 17.072, 291.565, 27.072, 732.725, 30.72, 943.685, 943.685, 16.238, 4.035}", "gold": ["-10", "100", "-9", "81", "1", "1", "3", "9", "7", "49", "8", "64", "304", "60.8", "7.79743547584717"], "correct": false}
+{"id": 23, "is_mcq": false, "response": "</think>\n\n\\boxed{B, A, B, A}", "gold": ["B", "A", "B", "A"], "correct": true}
+{"id": 24, "is_mcq": true, "response": "</think>\n\n\\boxed{A}", "gold": "A", "correct": true}
+{"id": 26, "is_mcq": false, "response": "</think>\n\n\\boxed{625*L*P}", "gold": ["625*L"], "correct": false}
+{"id": 29, "is_mcq": false, "response": "</think>\n\n\\boxed{384.62, 296.38}", "gold": ["442.857142857143", "332.142857142857"], "correct": false}
+{"id": 87, "is_mcq": true, "response": "</think>\n\n\\boxed{I}", "gold": "I", "correct": true}
+{"id": 129, "is_mcq": true, "response": "</think>\n\n\\boxed{D}", "gold": "D", "correct": true}
+{"id": 162, "is_mcq": false, "response": "</think>\n\n\\boxed{200}", "gold": ["237"], "correct": false}
+{"id": 194, "is_mcq": true, "response": "</think>\n\n\\boxed{A}", "gold": "A", "correct": true}
+{"id": 258, "is_mcq": true, "response": "</think>\n\n\\boxed{B}", "gold": "D", "correct": false}
+{"id": 289, "is_mcq": false, "response": "</think>\n\n\\boxed{1101}", "gold": ["2789"], "correct": false}
+{"id": 310, "is_mcq": true, "response": "</think>\n\n\\boxed{G}", "gold": "C", "correct": false}
+{"id": 323, "is_mcq": false, "response": "</think>\n\n\\boxed{0, 138}", "gold": ["0", "-6.000"], "correct": false}
+{"id": 361, "is_mcq": true, "response": "</think>\n\n\\boxed{C}", "gold": "G", "correct": false}
+{"id": 388, "is_mcq": false, "response": "</think>\n\n\\boxed{0.34, 0.28862, 28.862, 43}", "gold": ["0.34", "0.288981", "28.9", "43"], "correct": false}
+{"id": 417, "is_mcq": true, "response": "</think>\n\n\\boxed{J}", "gold": "E", "correct": false}
+{"id": 436, "is_mcq": false, "response": "</think>\n\n\\boxed{y^2}", "gold": ["y^2/32"], "correct": false}
+{"id": 484, "is_mcq": true, "response": "</think>\n\n\\boxed{E}", "gold": "E", "correct": true}
+{"id": 549, "is_mcq": true, "response": "</think>\n\n\\boxed{G}", "gold": "G", "correct": true}
+{"id": 567, "is_mcq": false, "response": "</think>\n\n\\boxed{7600}", "gold": ["9047"], "correct": false}
+{"id": 594, "is_mcq": false, "response": "</think>\n\n\\boxed{A, C}", "gold": ["A", "C"], "correct": true}
+{"id": 596, "is_mcq": true, "response": "</think>\n\n\\boxed{C}", "gold": "D", "correct": false}
+{"id": 653, "is_mcq": true, "response": "</think>\n\n\\boxed{G}", "gold": "H", "correct": false}
+{"id": 709, "is_mcq": false, "response": "</think>\n\n\\boxed{(-10, 5)}", "gold": ["(-10,5)"], "correct": true}
+{"id": 725, "is_mcq": true, "response": "</think>\n\n\\boxed{E}", "gold": "A", "correct": false}
+{"id": 732, "is_mcq": false, "response": "</think>\n\n\\boxed{B, A, D, C}", "gold": ["B", "A", "D", "C"], "correct": true}
+{"id": 786, "is_mcq": true, "response": "</think>\n\n\\boxed{B}", "gold": "H", "correct": false}
+{"id": 826, "is_mcq": true, "response": "</think>\n\n\\boxed{F}", "gold": "E", "correct": false}
+{"id": 858, "is_mcq": false, "response": "</think>\n\n\\boxed{6}", "gold": ["12"], "correct": false}
+{"id": 866, "is_mcq": false, "response": "</think>\n\n\\boxed{1, 4/5}", "gold": ["1", "0.8"], "correct": true}
+{"id": 880, "is_mcq": true, "response": "</think>\n\n\\boxed{D}", "gold": "D", "correct": true}
+{"id": 948, "is_mcq": true, "response": "</think>\n\n\\boxed{A}", "gold": "C", "correct": false}
+{"id": 991, "is_mcq": false, "response": "</think>\n\n\\boxed{46}", "gold": ["46"], "correct": true}
+{"id": 1001, "is_mcq": true, "response": "</think>\n\n\\boxed{C}", "gold": "C", "correct": true}
+{"id": 1045, "is_mcq": true, "response": "</think>\n\n\\boxed{J}", "gold": "C", "correct": false}
+{"id": 1113, "is_mcq": false, "response": "</think>\n\n\\boxed{0.912109, 2.511, 2.511, 4.35, 0.912109, 3+3*5.8+5.8^2}", "gold": ["0.900404126210578", "20.4", "2.511", "4.35", "0.900404126210578", "54.6004552"], "correct": false}
+{"id": 1116, "is_mcq": true, "response": "</think>\n\n\\boxed{I}", "gold": "A", "correct": false}
+{"id": 1123, "is_mcq": false, "response": "</think>\n\n\\boxed{24}", "gold": ["24"], "correct": true}
+{"id": 1124, "is_mcq": false, "response": "</think>\n\n\\boxed{5, increasing}", "gold": ["5", "increasing"], "correct": true}
+{"id": 1125, "is_mcq": false, "response": "</think>\n\n\\boxed{D, D, A}", "gold": ["D", "D", "A"], "correct": true}
