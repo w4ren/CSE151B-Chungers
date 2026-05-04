@@ -1,0 +1,10 @@
+{"id": 0, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{105950}", "gold": ["325*(1+325)"], "correct": true}
+{"id": 1, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{C}", "gold": "F", "correct": false}
+{"id": 2, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{143.2}", "gold": ["143.224229233795", "2.32624773420025"], "correct": false}
+{"id": 3, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{5/8}", "gold": ["5/8"], "correct": true}
+{"id": 4, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{C}", "gold": "C", "correct": true}
+{"id": 5, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{62.78, 335.93, 604.67}", "gold": ["62.7777777777778", "335.927777777778", "604.67"], "correct": false}
+{"id": 6, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{G, B}", "gold": ["G", "B"], "correct": true}
+{"id": 7, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{13/9}", "gold": ["1.44444444444444"], "correct": true}
+{"id": 8, "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{0.4472135955}", "gold": ["(1/2)^[(1999-1963)/31]"], "correct": false}
+{"id": 9, "is_mcq": true, "response": "<think>\n</think>\n\n\\boxed{A}", "gold": "A", "correct": true}

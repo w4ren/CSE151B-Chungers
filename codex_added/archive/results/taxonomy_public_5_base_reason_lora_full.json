@@ -1,0 +1,28 @@
+{
+  "counts": {
+    "correct": 3,
+    "answer_count_mismatch": 1,
+    "wrong_mcq_letter": 1
+  },
+  "examples": {
+    "answer_count_mismatch": [
+      {
+        "id": 2,
+        "gold": [
+          "143.224229233795",
+          "2.32624773420025"
+        ],
+        "answer_key": "135.099",
+        "response_preview": "<think>\n</think>\n\n\\boxed{135.099}"
+      }
+    ],
+    "wrong_mcq_letter": [
+      {
+        "id": 4,
+        "gold": "C",
+        "answer_key": "D",
+        "response_preview": "<think>\n</think>\n\n\\boxed{D}"
+      }
+    ]
+  }
+}

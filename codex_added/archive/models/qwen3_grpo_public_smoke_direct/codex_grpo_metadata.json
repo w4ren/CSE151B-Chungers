@@ -1,0 +1,11 @@
+{
+  "init_adapter_dir": "codex_added/models/qwen3_answer_format_lora",
+  "max_completion_length": 256,
+  "max_examples": 4,
+  "max_prompt_length": 1024,
+  "max_steps": 2,
+  "model_id": "Qwen/Qwen3-4B-Thinking-2507",
+  "num_generations": 2,
+  "public": "data/public.jsonl",
+  "variant": "final_box_only"
+}

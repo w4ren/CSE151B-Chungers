@@ -1,0 +1,34 @@
+{
+  "counts": {
+    "correct": 2,
+    "wrong_mcq_letter": 2,
+    "unboxed_or_loose_answer": 1
+  },
+  "examples": {
+    "wrong_mcq_letter": [
+      {
+        "id": 1,
+        "gold": "F",
+        "answer_key": "B",
+        "response_preview": "Okay, let's try to solve this integral. The problem is the integral from negative infinity to positive infinity of (a^(3/2)) divided by (s² + a²) ds. Hmm, first, I need to recall how to integrate functions like 1/(s² + a²). \n\nWait, I remember that the integral of 1/(s² + a²) ds is (1/a) arctan(s/a) + C. Let me confirm that. Yeah, the standard integral ∫1/(x² + b²) dx = (1/b) arctan(x/b) + C. So in this case, the denominator is s² + a², so b would be a. So the integral of 1/(s² + a²) ds is (1/a) "
+      },
+      {
+        "id": 4,
+        "gold": "C",
+        "answer_key": "A",
+        "response_preview": "Okay, let's try to solve this problem step by step. The question is asking for an analytic function \\( f(z) = u + iv \\) where \\( u(x, y) = x^3 + 6x^2y - 3xy^2 - 2y^3 \\) and \\( f(0) = 0 \\). \n\nFirst, I remember that for an analytic function, the real part \\( u \\) and the imaginary part \\( v \\) must satisfy the Cauchy-Riemann equations. Also, since \\( f(z) \\) is analytic, it can be expressed as a power series in \\( z \\), and we can find \\( v \\) by integrating the partial derivatives of \\( u \\).\n\nLe"
+      }
+    ],
+    "unboxed_or_loose_answer": [
+      {
+        "id": 2,
+        "gold": [
+          "143.224229233795",
+          "2.32624773420025"
+        ],
+        "answer_key": "[ANS]Fahrenheit\", 0.01454544,0.727272*0.007272≈0.00528,sototalapprox0.5090904+0.014",
+        "response_preview": "This is a complex or challenging question, and it is difficult to provide a direct and correct answer. I need to think about it.\nWell, so this is a Newton's Law of Cooling problem, right? Let me recall what that says. Newton's Law of Cooling states that the rate of change of the temperature of an object is proportional to the difference between its temperature and the ambient temperature. So, mathematically, that should be a differential equation. Let me write that down first to make sure.\n\nLet "
+      }
+    ]
+  }
+}

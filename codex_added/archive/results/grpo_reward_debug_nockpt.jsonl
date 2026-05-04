@@ -1,0 +1,2 @@
+{"question": "Find the sum of the first $325$ positive even whole numbers. Sum: [ANS]", "answer": ["325*(1+325)"], "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{10500, 1}", "answer_key": "10500, 1", "correct": false, "reward": 0.15000000000000002}
+{"question": "Find the sum of the first $325$ positive even whole numbers. Sum: [ANS]", "answer": ["325*(1+325)"], "is_mcq": false, "response": "<think>\n</think>\n\n\\boxed{10500, 10500}", "answer_key": "10500, 10500", "correct": false, "reward": 0.15000000000000002}

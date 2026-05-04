@@ -1,0 +1,2 @@
+{"id": 0, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "325*162", "generated_tokens": 14, "hit_token_limit": false, "response": "</think>\n\n\\boxed{325*162}"}
+{"id": 1, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "F", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{F}"}

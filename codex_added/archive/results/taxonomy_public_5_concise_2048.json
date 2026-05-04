@@ -1,0 +1,42 @@
+{
+  "counts": {
+    "answer_count_mismatch": 2,
+    "wrong_mcq_letter": 2,
+    "correct": 1
+  },
+  "examples": {
+    "answer_count_mismatch": [
+      {
+        "id": 0,
+        "gold": [
+          "325*(1+325)"
+        ],
+        "answer_key": "105950",
+        "response_preview": "Okay, let's see. I need to find the sum of the first 325 positive even whole numbers. Hmm, first, let me make sure I know what the first few positive even whole numbers are. The positive even whole numbers start from 2, right? So the first one is 2, the second is 4, the third is 6, and so on. So the nth positive even whole number is 2n. Let me confirm that. For n=1, 2*1=2; n=2, 2*2=4; yeah, that seems right.\n\nSo if I want the sum of the first 325 positive even whole numbers, that would be the su"
+      },
+      {
+        "id": 2,
+        "gold": [
+          "143.224229233795",
+          "2.32624773420025"
+        ],
+        "answer_key": "[ANS]Fahrenheit\", soprobably143.Wait, let'sdoitwithmorepreci\\sec^{1}alculation.Compute\\((8/11)^{1.5}\\):8/11=0.7272727...\\sqrt{8/11}",
+        "response_preview": "Okay, let's tackle part (a) first. So, we have a roasted turkey cooling down from 185°F to a room temperature of 75°F. This sounds like a Newton's Law of Cooling problem. Newton's Law of Cooling states that the rate of change of the temperature of an object is proportional to the difference between its temperature and the ambient temperature. \n\nThe formula for Newton's Law of Cooling is usually written as:\n\n\\( T(t) = T_s + (T_0 - T_s)e^{-kt} \\)\n\nwhere:\n- \\( T(t) \\) is the temperature of the obje"
+      }
+    ],
+    "wrong_mcq_letter": [
+      {
+        "id": 1,
+        "gold": "F",
+        "answer_key": "A",
+        "response_preview": "Okay, let's try to solve this integral. The problem is the integral from negative infinity to positive infinity of (a^(3/2)) divided by (s^2 + a^2) ds. Hmm, first I need to recall some integral formulas, especially for integrals of the form 1/(s^2 + b^2). \n\nWait, the integral of 1/(s^2 + b^2) ds from -infty to +infty is a standard one. I think it's (pi/b). Let me confirm. The integral of 1/(s^2 + b^2) ds from -infty to infty is (1/b) arctan(s/b) evaluated from -infty to infty. As s approaches in"
+      },
+      {
+        "id": 4,
+        "gold": "C",
+        "answer_key": "A",
+        "response_preview": "Okay, let's try to solve this problem step by step. The question is about finding an analytic function \\( f(z) = u + iv \\) where \\( u(x, y) = x^3 + 6x^2y - 3xy^2 - 2y^3 \\) and \\( f(0) = 0 \\). \n\nFirst, I remember that for a function to be analytic, the real part \\( u \\) and the imaginary part \\( v \\) must satisfy the Cauchy-Riemann equations. Also, since \\( f(z) \\) is analytic, it can be expressed as a power series in \\( z \\), and we can find \\( v \\) by integrating the partial derivatives of \\( u"
+      }
+    ]
+  }
+}

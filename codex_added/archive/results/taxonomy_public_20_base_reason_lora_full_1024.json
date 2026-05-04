@@ -1,0 +1,70 @@
+{
+  "counts": {
+    "correct": 8,
+    "wrong_mcq_letter": 7,
+    "wrong_free_form_value": 4,
+    "answer_count_mismatch": 1
+  },
+  "examples": {
+    "wrong_free_form_value": [
+      {
+        "id": 0,
+        "gold": [
+          "325*(1+325)"
+        ],
+        "answer_key": "111850",
+        "response_preview": "<think>\n</think>\n\n\\boxed{111850}"
+      },
+      {
+        "id": 8,
+        "gold": [
+          "(1/2)^[(1999-1963)/31]"
+        ],
+        "answer_key": "0.4467",
+        "response_preview": "<think>\n</think>\n\n\\boxed{0.4467}"
+      },
+      {
+        "id": 12,
+        "gold": [
+          "380",
+          "315",
+          "13",
+          "310"
+        ],
+        "answer_key": "380, 315, 314, 310",
+        "response_preview": "<think>\n</think>\n\n\\boxed{380, 315, 314, 310}"
+      }
+    ],
+    "answer_count_mismatch": [
+      {
+        "id": 2,
+        "gold": [
+          "143.224229233795",
+          "2.32624773420025"
+        ],
+        "answer_key": "135.555555555556",
+        "response_preview": "<think>\n</think>\n\n\\boxed{135.555555555556}"
+      }
+    ],
+    "wrong_mcq_letter": [
+      {
+        "id": 4,
+        "gold": "C",
+        "answer_key": "D",
+        "response_preview": "<think>\n</think>\n\n\\boxed{D}"
+      },
+      {
+        "id": 9,
+        "gold": "A",
+        "answer_key": "G",
+        "response_preview": "<think>\n</think>\n\n\\boxed{G}"
+      },
+      {
+        "id": 10,
+        "gold": "E",
+        "answer_key": "F",
+        "response_preview": "<think>\n</think>\n\n\\boxed{F}"
+      }
+    ]
+  }
+}

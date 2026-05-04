@@ -1,0 +1,3 @@
+# Added by Codex: keep generated result files local; not part of the original starter repository.
+*
+!.gitignore

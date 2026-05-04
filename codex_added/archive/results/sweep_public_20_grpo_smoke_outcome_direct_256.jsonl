@@ -1,0 +1,20 @@
+{"id": 0, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "104000", "generated_tokens": 13, "hit_token_limit": false, "response": "</think>\n\n\\boxed{104000}"}
+{"id": 1, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "F", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{F}"}
+{"id": 2, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "132.917, 1.75056", "generated_tokens": 23, "hit_token_limit": false, "response": "</think>\n\n\\boxed{132.917, 1.75056}"}
+{"id": 3, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "\\frac{5}{8}", "generated_tokens": 10, "hit_token_limit": false, "response": "</think>\n\n\\boxed{5/8}"}
+{"id": 4, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "C", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{C}"}
+{"id": 5, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "62.7778, 352.933, 634.279", "generated_tokens": 32, "hit_token_limit": false, "response": "</think>\n\n\\boxed{62.7778, 352.933, 634.279}"}
+{"id": 6, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "G, B", "generated_tokens": 10, "hit_token_limit": false, "response": "</think>\n\n\\boxed{G, B}"}
+{"id": 7, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "1.65714285714286", "generated_tokens": 23, "hit_token_limit": false, "response": "</think>\n\n\\boxed{1.65714285714286}"}
+{"id": 8, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "0.456484521335527", "generated_tokens": 24, "hit_token_limit": false, "response": "</think>\n\n\\boxed{0.456484521335527}"}
+{"id": 9, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "C", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{C}"}
+{"id": 10, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "A", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{A}"}
+{"id": 11, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "A", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{A}"}
+{"id": 12, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "310, 301, 4, 310", "generated_tokens": 25, "hit_token_limit": false, "response": "</think>\n\n</think>\n\n\\boxed{310, 301, 4, 310}"}
+{"id": 13, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "I", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{I}"}
+{"id": 14, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "B", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{B}"}
+{"id": 15, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "A, C, A", "generated_tokens": 12, "hit_token_limit": false, "response": "</think>\n\n\\boxed{A, C, A}"}
+{"id": 16, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "1.3618, \\pi", "generated_tokens": 15, "hit_token_limit": false, "response": "</think>\n\n\\boxed{1.3618, pi}"}
+{"id": 17, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "16*x, 16*x", "generated_tokens": 15, "hit_token_limit": false, "response": "</think>\n\n\\boxed{16*x, 16*x}"}
+{"id": 18, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "G", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{G}"}
+{"id": 19, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "B", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{B}"}

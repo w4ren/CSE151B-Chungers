@@ -1,0 +1,99 @@
+{
+  "created_by": "Codex",
+  "derived_files": {
+    "external_math_finalizer_sft.jsonl": "Finalizer SFT messages: problem + worked solution trace -> boxed answer only.",
+    "external_math_sft.jsonl": "Reasoning SFT messages: problem -> worked solution."
+  },
+  "filtered_source_counts": {
+    "EleutherAI/hendrycks_math:algebra": 1744,
+    "EleutherAI/hendrycks_math:counting_and_probability": 771,
+    "EleutherAI/hendrycks_math:geometry": 870,
+    "EleutherAI/hendrycks_math:intermediate_algebra": 1295,
+    "EleutherAI/hendrycks_math:number_theory": 867,
+    "EleutherAI/hendrycks_math:prealgebra": 1205,
+    "EleutherAI/hendrycks_math:precalculus": 746,
+    "openai/gsm8k:main": 2500,
+    "stellaathena/math_mcqa": 7496
+  },
+  "finalizer_examples": {
+    "filtered_task_type_counts": {
+      "free_form": 7494,
+      "free_form_arithmetic": 2500,
+      "mcq": 7496
+    },
+    "skipped_no_answer": 4,
+    "task_type_counts": {
+      "free_form": 7496,
+      "free_form_arithmetic": 2500,
+      "mcq": 7498
+    },
+    "total": 17490
+  },
+  "format": "JSONL rows with messages usable by codex_added/scripts/13_train_lora_sft.py.",
+  "notes": [
+    "MATH/Hendrycks train examples are included across all seven subject configs.",
+    "GSM8K is deterministically sampled to 2500 train examples for compact arithmetic practice.",
+    "math_mcqa train examples are included for explicit multiple-choice reasoning practice."
+  ],
+  "public_overlap_filter": {
+    "method": "exact normalized problem-text match against data/public.jsonl, ignoring MCQ option text",
+    "removed_finalizer_rows": 4,
+    "removed_rows": [
+      {
+        "id": "hendrycks_math/number_theory/train/671",
+        "public_id": 1017,
+        "source": "EleutherAI/hendrycks_math"
+      },
+      {
+        "id": "stellaathena/math_mcqa/train/5349",
+        "public_id": 1017,
+        "source": "stellaathena/math_mcqa"
+      },
+      {
+        "id": "hendrycks_math/number_theory/train/668",
+        "public_id": 725,
+        "source": "EleutherAI/hendrycks_math"
+      },
+      {
+        "id": "stellaathena/math_mcqa/train/5346",
+        "public_id": 725,
+        "source": "stellaathena/math_mcqa"
+      }
+    ],
+    "removed_sft_rows": 4
+  },
+  "purpose": "External math reasoning and MCQ SFT candidates for CSE151B math dataset experiments.",
+  "quality_notes": [
+    "MCQ reasoning rows are sanitized so the assistant output has only one final boxed option letter.",
+    "Source boxed numeric answers inside MCQ worked solutions are unboxed before appending the option letter."
+  ],
+  "seed": 151,
+  "source_counts": {
+    "EleutherAI/hendrycks_math:algebra": 1744,
+    "EleutherAI/hendrycks_math:counting_and_probability": 771,
+    "EleutherAI/hendrycks_math:geometry": 870,
+    "EleutherAI/hendrycks_math:intermediate_algebra": 1295,
+    "EleutherAI/hendrycks_math:number_theory": 869,
+    "EleutherAI/hendrycks_math:prealgebra": 1205,
+    "EleutherAI/hendrycks_math:precalculus": 746,
+    "openai/gsm8k:main": 2500,
+    "stellaathena/math_mcqa": 7498
+  },
+  "sources": [
+    {
+      "dataset": "EleutherAI/hendrycks_math",
+      "split": "train"
+    },
+    {
+      "config": "main",
+      "dataset": "openai/gsm8k",
+      "sampled_examples": 2500,
+      "split": "train"
+    },
+    {
+      "dataset": "stellaathena/math_mcqa",
+      "split": "train"
+    }
+  ],
+  "total_examples": 17494
+}

@@ -1,0 +1,5 @@
+{"id": 0, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "10400", "generated_tokens": 12, "hit_token_limit": false, "response": "</think>\n\n\\boxed{10400}"}
+{"id": 1, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "F", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{F}"}
+{"id": 2, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "142.979, 1.57347", "generated_tokens": 23, "hit_token_limit": false, "response": "</think>\n\n\\boxed{142.979, 1.57347}"}
+{"id": 3, "is_mcq": false, "variant": "final_box_only", "sample_index": 0, "answer_key": "\\frac{5}{8}", "generated_tokens": 10, "hit_token_limit": false, "response": "</think>\n\n\\boxed{5/8}"}
+{"id": 4, "is_mcq": true, "variant": "final_box_only", "sample_index": 0, "answer_key": "D", "generated_tokens": 8, "hit_token_limit": false, "response": "</think>\n\n\\boxed{D}"}
