@@ -1,8 +1,11 @@
 .claude
 .venv
+.venv-vllm
+.ipynb_checkpoints/
 results
 data
 __pycache__
+.pytest_cache/
 codex_added/data
 codex_added/models
 codex_added/results

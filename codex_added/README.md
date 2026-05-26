@@ -26,6 +26,13 @@ codex_added/
 
 ## Common Commands
 
+For a fresh GPU instance, start with
+`docs/RUN_ON_NEW_INSTANCE.md`. It covers environment setup, data placement,
+adapter setup, smoke tests, full private submission, multi-GPU runs, and vLLM
+notes.
+
+For the literature-backed improvement plan, see `docs/ACADEMIC_SWEEP.md`.
+
 ```bash
 codex_added/best/run.sh data/private.jsonl codex_added/results/best_private codex_added/submissions/best_submission.csv
 codex_added/best/run_8gpu.sh data/private.jsonl codex_added/results/best_private_8gpu codex_added/submissions/best_submission.csv
