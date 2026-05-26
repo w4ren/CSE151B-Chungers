@@ -1,6 +1,12 @@
 .claude
 .venv
 .venv-vllm
+.conda-vllm
+.conda-pkgs
+.uv-local
+.uv-cache
+.uv-python
+.pip-cache
 .ipynb_checkpoints/
 results
 data

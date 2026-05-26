@@ -16,6 +16,6 @@ trl==0.19.1
 
 # Optional later-stage packages:
 # bitsandbytes
-# vllm
+vllm>=0.8.5
 # ipykernel
 # jupyter
