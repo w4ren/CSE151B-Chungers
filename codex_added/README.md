@@ -31,6 +31,9 @@ For a fresh GPU instance, start with
 adapter setup, smoke tests, full private submission, multi-GPU runs, and vLLM
 notes.
 
+For efficient public100/vLLM inference and recovery notes, see
+`INFERENCE_README.md`.
+
 For the literature-backed improvement plan, see `docs/ACADEMIC_SWEEP.md`.
 
 ```bash

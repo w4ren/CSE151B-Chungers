@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Added by Codex: run the best-known pipeline as independent shards across GPUs.
+# Added by Codex: run the best-known pipeline as independent shards across visible GPUs.
 
 set -euo pipefail
 
@@ -9,10 +9,12 @@ Usage:
   codex_added/scripts/20_run_best_pipeline_8gpu.sh DATA_PATH OUT_DIR SUBMISSION_PATH
 
 Environment:
-  GPUS        Comma-separated GPU ids. Default: 0,1,2,3,4,5,6,7
+  GPUS        Comma-separated GPU ids. Default: auto-detect visible CUDA GPUs
   NUM_SHARDS  Number of row shards to launch. Default: number of GPUS
   ROW_OFFSET  Dataset row offset for this job. Default: 0
   ROW_LIMIT   Number of dataset rows for this job. Default: all rows after ROW_OFFSET
+  BACKEND     Generation backend. Default: vllm
+  PYTHON      Python executable. Default: .venv-vllm/bin/python when present
   ADAPTER_DIR LoRA adapter directory. Default: codex_added/models/qwen3_answer_format_lora
   SCORE       Set SCORE=1 to score public/labeled data.
   WRITE_SUBMISSION
@@ -21,21 +23,50 @@ Environment:
 Examples:
   codex_added/scripts/20_run_best_pipeline_8gpu.sh data/private.jsonl codex_added/results/best_private_8gpu codex_added/submissions/best_submission.csv
 
-  GPUS=0,1,2,3 NUM_SHARDS=4 WRITE_SUBMISSION=0 \
+  GPUS=0,1 NUM_SHARDS=2 WRITE_SUBMISSION=0 \
     codex_added/scripts/20_run_best_pipeline_8gpu.sh codex_added/job_data/private_job0.jsonl codex_added/results/best_private_job0
 EOF
   exit 0
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+cd "${REPO_ROOT}"
+
 DATA_PATH="${1:-data/private.jsonl}"
 OUT_DIR="${2:-codex_added/results/best_private_8gpu}"
 SUBMISSION_PATH="${3:-codex_added/submissions/best_submission.csv}"
 ADAPTER_DIR="${ADAPTER_DIR:-codex_added/models/qwen3_answer_format_lora}"
-GPUS="${GPUS:-0,1,2,3,4,5,6,7}"
 SCORE="${SCORE:-0}"
 ROW_OFFSET="${ROW_OFFSET:-0}"
 ROW_LIMIT="${ROW_LIMIT:-}"
 WRITE_SUBMISSION="${WRITE_SUBMISSION:-1}"
+BACKEND="${BACKEND:-vllm}"
+export BACKEND
+
+if [[ -z "${PYTHON:-}" ]]; then
+  if [[ -x ".venv-vllm/bin/python" ]]; then
+    PYTHON=".venv-vllm/bin/python"
+  else
+    PYTHON="python"
+  fi
+fi
+
+export PYTHON
+export PYTHONNOUSERSITE="${PYTHONNOUSERSITE:-1}"
+export HF_HOME="${HF_HOME:-${REPO_ROOT}/.hf-cache}"
+export HF_HUB_CACHE="${HF_HUB_CACHE:-${HF_HOME}/hub}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-${REPO_ROOT}/.cache}"
+export VLLM_CACHE_ROOT="${VLLM_CACHE_ROOT:-${REPO_ROOT}/.vllm-cache}"
+
+if [[ -z "${GPUS:-}" ]]; then
+  GPU_COUNT="$(${PYTHON} -c 'import torch; print(torch.cuda.device_count())' 2>/dev/null || true)"
+  if [[ ! "${GPU_COUNT}" =~ ^[0-9]+$ || "${GPU_COUNT}" -le 0 ]]; then
+    echo "No CUDA GPUs detected by ${PYTHON}. Set GPUS manually if CUDA is available." >&2
+    exit 1
+  fi
+  GPUS="$(seq -s, 0 "$((GPU_COUNT - 1))")"
+fi
 
 if [[ ! -f "${DATA_PATH}" ]]; then
   echo "Missing data file: ${DATA_PATH}" >&2
@@ -50,7 +81,7 @@ fi
 
 IFS=',' read -r -a GPU_IDS <<< "${GPUS}"
 if [[ "${#GPU_IDS[@]}" -eq 0 ]]; then
-  echo "No GPU ids configured. Set GPUS=0,1,2,3,4,5,6,7." >&2
+  echo "No GPU ids configured. Set GPUS=0,1." >&2
   exit 1
 fi
 
@@ -100,6 +131,8 @@ mkdir -p "${LOG_DIR}"
 
 echo "Dataset rows: ${TOTAL_ROWS}"
 echo "Running rows [${ROW_OFFSET}, $((ROW_OFFSET + RUN_ROWS))) as ${NUM_SHARDS} shards on GPUs: ${GPUS}"
+echo "Python: ${PYTHON}"
+echo "Backend: ${BACKEND}"
 echo "Outputs: ${OUT_DIR}"
 
 base_size=$((RUN_ROWS / NUM_SHARDS))
@@ -160,7 +193,7 @@ for ((shard = 0; shard < NUM_SHARDS; shard++)); do
   selected_files+=("${OUT_DIR}/shard_${label}/selected.jsonl")
 done
 
-python codex_added/scripts/21_merge_shard_predictions.py \
+"${PYTHON}" codex_added/scripts/21_merge_shard_predictions.py \
   --data "${DATA_PATH}" \
   --offset "${ROW_OFFSET}" \
   --limit "${RUN_ROWS}" \
@@ -168,7 +201,7 @@ python codex_added/scripts/21_merge_shard_predictions.py \
   --predictions "${selected_files[@]}"
 
 if [[ "${WRITE_SUBMISSION}" == "1" && "${ROW_OFFSET}" == "0" && "${RUN_ROWS}" == "${TOTAL_ROWS}" ]]; then
-  python codex_added/scripts/make_submission.py \
+  "${PYTHON}" codex_added/scripts/make_submission.py \
     --data "${DATA_PATH}" \
     --predictions "${OUT_DIR}/selected.jsonl" \
     --output "${SUBMISSION_PATH}"

@@ -125,6 +125,18 @@ PROMPT_VARIANTS: dict[str, dict[str, Any]] = {
             "or use area/chord relations instead of guessing from option patterns."
         ),
     },
+    "mcq_direct_vote": {
+        "math_system": DEFAULT_MATH_SYSTEM,
+        "mcq_system": (
+            "You are an expert mathematician answering a multiple-choice math problem. Work directly "
+            "and briefly: use at most 8 short calculation lines, compare the result to the listed "
+            "options, then stop. Do not restart, do not debate alternate problem interpretations, and "
+            "do not continue after the final box. If two options are mathematically equivalent, choose "
+            "the option whose written form matches your derived expression most literally. Output "
+            "exactly one final option letter in \boxed{}, for example \boxed{C}."
+        ),
+        "assistant_mode": "direct",
+    },
     "symbolic_strict": {
         "math_system": (
             "You are an expert mathematician. The grader prefers exact symbolic answer strings. "

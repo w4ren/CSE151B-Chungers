@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Sequence
@@ -25,12 +26,58 @@ def read_jsonl(path: str | Path) -> list[JsonRecord]:
     return records
 
 
+def read_jsonl_complete_prefix(path: str | Path) -> list[JsonRecord]:
+    records: list[JsonRecord] = []
+    with Path(path).open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError:
+                break
+    return records
+
+
+def _fsync_parent_dir(path: Path) -> None:
+    try:
+        fd = os.open(path.parent, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def write_jsonl(path: str | Path, records: Iterable[JsonRecord]) -> None:
     out_path = Path(path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    with out_path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    tmp_path = out_path.with_name(f".{out_path.name}.tmp.{os.getpid()}")
+    try:
+        with tmp_path.open("w", encoding="utf-8") as handle:
+            for record in records:
+                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_path, out_path)
+        _fsync_parent_dir(out_path)
+    finally:
+        try:
+            tmp_path.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def append_jsonl_record(path: str | Path, record: JsonRecord) -> None:
+    out_path = Path(path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with out_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    _fsync_parent_dir(out_path)
 
 
 def load_yaml_config(path: str | Path) -> JsonRecord:

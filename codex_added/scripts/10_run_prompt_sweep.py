@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,14 @@ from math_comp.data import batched, is_mcq, load_yaml_config, read_jsonl
 from math_comp.prompts import build_prompt_text
 from math_comp.scoring import extract_answer_key
 from math_comp.variants import get_variant, list_variants
+from math_comp.vllm_helpers import (
+    add_vllm_cli_args,
+    make_llm,
+    make_lora_request,
+    make_sampling_params,
+    vllm_generated_tokens,
+    vllm_text,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -52,15 +61,17 @@ def parse_args() -> argparse.Namespace:
         help="Use explicit answers only, or allow the judger's loose fallback for voting keys.",
     )
     parser.add_argument("--assistant-prefix", default=None, help="Optional assistant text prefix to append to the prompt.")
+    parser.add_argument("--mcq-letter-only", action="store_true", help="Constrain vLLM MCQ sampling to one option-letter token.")
     parser.add_argument("--resume", action="store_true", help="Append and skip completed id/variant/sample rows.")
     parser.add_argument("--list-variants", action="store_true", help="List prompt variants and exit.")
+    add_vllm_cli_args(parser)
     return parser.parse_args()
 
 
 def update_config(config: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
     model_config = config.setdefault("model", {})
     gen_config = config.setdefault("generation", {})
-    model_config["backend"] = "transformers"
+    model_config["backend"] = args.backend
 
     if args.model_id is not None:
         model_config["id"] = args.model_id
@@ -112,6 +123,11 @@ def load_transformers(config: dict[str, Any]) -> tuple[Any, Any]:
         "trust_remote_code": trust_remote_code,
         "device_map": model_config.get("device_map", "auto"),
     }
+    attn_implementation = model_config.get("attn_implementation") or os.environ.get(
+        "TRANSFORMERS_ATTENTION_IMPLEMENTATION"
+    )
+    if attn_implementation:
+        model_kwargs["attn_implementation"] = attn_implementation
 
     if quantization == "4bit":
         try:
@@ -140,6 +156,23 @@ def load_transformers(config: dict[str, Any]) -> tuple[Any, Any]:
     return tokenizer, model
 
 
+def load_vllm(config: dict[str, Any], args: argparse.Namespace) -> tuple[Any, Any, Any | None]:
+    from transformers import AutoTokenizer
+
+    model_config = config.get("model", {})
+    model_id = model_config.get("id", "Qwen/Qwen3-4B-Thinking-2507")
+    trust_remote_code = bool(model_config.get("trust_remote_code", True))
+    adapter_dir = model_config.get("adapter_dir")
+
+    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=trust_remote_code)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    llm = make_llm(model_id, args, trust_remote_code=trust_remote_code, adapter_dir=adapter_dir)
+    lora_request = make_lora_request(adapter_dir)
+    return tokenizer, llm, lora_request
+
+
 def completed_keys(path: Path) -> set[tuple[int, str, int]]:
     if not path.exists():
         return set()
@@ -147,6 +180,175 @@ def completed_keys(path: Path) -> set[tuple[int, str, int]]:
     for record in read_jsonl(path):
         done.add((int(record["id"]), str(record["variant"]), int(record["sample_index"])))
     return done
+
+
+def write_transformers_outputs(
+    out_path: Path,
+    mode: str,
+    tasks: list[dict[str, Any]],
+    variants: dict[str, dict[str, Any]],
+    config: dict[str, Any],
+    answer_key_mode: str,
+) -> None:
+    tokenizer, model = load_transformers(config)
+    gen_kwargs = generation_kwargs(config)
+    gen_kwargs.setdefault("pad_token_id", tokenizer.eos_token_id)
+    batch_size = int(config.get("generation", {}).get("batch_size", 1))
+    max_input_tokens = int(config.get("model", {}).get("max_input_tokens", 16384))
+
+    import torch
+
+    with out_path.open(mode, encoding="utf-8") as handle:
+        for batch in tqdm(list(batched(tasks, batch_size)), desc="Prompt sweep"):
+            prompts = [build_prompt_text(tokenizer, task["item"], variants[task["variant"]]) for task in batch]
+            inputs = tokenizer(
+                prompts,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=max_input_tokens,
+            )
+            input_device = next(model.parameters()).device
+            inputs = {key: value.to(input_device) for key, value in inputs.items()}
+            try:
+                with torch.no_grad():
+                    outputs = model.generate(**inputs, **gen_kwargs)
+            except Exception as exc:
+                error = f"{type(exc).__name__}: {exc}"
+                print(
+                    "Generation failed for batch ids "
+                    f"{[int(task['item']['id']) for task in batch]}: {error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                for task in batch:
+                    item = task["item"]
+                    response = ""
+                    record = {
+                        "id": int(item["id"]),
+                        "is_mcq": is_mcq(item),
+                        "variant": task["variant"],
+                        "sample_index": int(task["sample_index"]),
+                        "answer_key": extract_answer_key(item, response, strict=answer_key_mode == "strict"),
+                        "generated_tokens": 0,
+                        "hit_token_limit": False,
+                        "generation_error": error,
+                        "response": response,
+                    }
+                    handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                try:
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                except Exception as cleanup_exc:
+                    print(
+                        f"CUDA cleanup failed after generation error: {type(cleanup_exc).__name__}: {cleanup_exc}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                continue
+
+            prompt_width = inputs["input_ids"].shape[1]
+            for task, output in zip(batch, outputs):
+                item = task["item"]
+                new_tokens = output[prompt_width:]
+                response = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+                assistant_prefix = str(config.get("prompt", {}).get("assistant_prefix") or "")
+                if assistant_prefix:
+                    response = assistant_prefix + response
+                generated_tokens = int(new_tokens.numel())
+                record = {
+                    "id": int(item["id"]),
+                    "is_mcq": is_mcq(item),
+                    "variant": task["variant"],
+                    "sample_index": int(task["sample_index"]),
+                    "answer_key": extract_answer_key(item, response, strict=answer_key_mode == "strict"),
+                    "generated_tokens": generated_tokens,
+                    "hit_token_limit": generated_tokens >= int(gen_kwargs.get("max_new_tokens", generated_tokens + 1)),
+                    "response": response,
+                }
+                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+
+
+
+def mcq_letter_token_ids(tokenizer: Any, item: dict[str, Any]) -> list[int]:
+    options = item.get("options") or []
+    if not options:
+        raise ValueError(f"--mcq-letter-only requires MCQ options for id {item.get('id')}.")
+    token_ids: set[int] = set()
+    for index in range(len(options)):
+        label = chr(65 + index)
+        for text in (label, " " + label):
+            ids = tokenizer.encode(text, add_special_tokens=False)
+            if len(ids) == 1:
+                token_ids.add(int(ids[0]))
+    if not token_ids:
+        raise ValueError(f"Could not build option-letter token set for id {item.get('id')}.")
+    return sorted(token_ids)
+
+def write_vllm_outputs(
+    out_path: Path,
+    mode: str,
+    tasks: list[dict[str, Any]],
+    variants: dict[str, dict[str, Any]],
+    config: dict[str, Any],
+    args: argparse.Namespace,
+) -> None:
+    tokenizer, llm, lora_request = load_vllm(config, args)
+    gen_config = config.get("generation", {})
+    sampling_params = make_sampling_params(
+        max_tokens=int(gen_config.get("max_new_tokens", 2048)),
+        temperature=float(gen_config.get("temperature", 0.6)),
+        top_p=float(gen_config.get("top_p", 0.95)),
+        top_k=int(gen_config["top_k"]) if "top_k" in gen_config else None,
+        repetition_penalty=float(gen_config.get("repetition_penalty", 1.0)),
+        do_sample=bool(gen_config.get("do_sample", True)),
+    )
+    max_new_tokens = int(gen_config.get("max_new_tokens", 2048))
+    assistant_prefix = str(config.get("prompt", {}).get("assistant_prefix") or "")
+    chunk_size = int(args.vllm_batch_size or len(tasks) or 1)
+
+    with out_path.open(mode, encoding="utf-8") as handle:
+        for chunk in tqdm(list(batched(tasks, chunk_size)), desc="Prompt sweep"):
+            prompts = [build_prompt_text(tokenizer, task["item"], variants[task["variant"]]) for task in chunk]
+            if args.mcq_letter_only:
+                chunk_sampling_params = [
+                    make_sampling_params(
+                        max_tokens=1,
+                        temperature=float(gen_config.get("temperature", 0.6)),
+                        top_p=float(gen_config.get("top_p", 0.95)),
+                        top_k=int(gen_config["top_k"]) if "top_k" in gen_config else None,
+                        repetition_penalty=float(gen_config.get("repetition_penalty", 1.0)),
+                        do_sample=bool(gen_config.get("do_sample", True)),
+                        allowed_token_ids=mcq_letter_token_ids(tokenizer, task["item"]),
+                    )
+                    for task in chunk
+                ]
+            else:
+                chunk_sampling_params = sampling_params
+            outputs = llm.generate(prompts, sampling_params=chunk_sampling_params, lora_request=lora_request)
+            for task, output in zip(chunk, outputs):
+                item = task["item"]
+                response = vllm_text(output)
+                if assistant_prefix:
+                    response = assistant_prefix + response
+                generated_tokens = vllm_generated_tokens(output)
+                record = {
+                    "id": int(item["id"]),
+                    "is_mcq": is_mcq(item),
+                    "variant": task["variant"],
+                    "sample_index": int(task["sample_index"]),
+                    "answer_key": extract_answer_key(item, response, strict=args.answer_key_mode == "strict"),
+                    "generated_tokens": generated_tokens,
+                    "hit_token_limit": generated_tokens >= max_new_tokens,
+                    "response": response,
+                }
+                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+                handle.flush()
+                os.fsync(handle.fileno())
 
 
 def main() -> None:
@@ -179,53 +381,10 @@ def main() -> None:
                     tasks.append({"item": item, "variant": variant_name, "sample_index": sample_index})
 
     print(f"Generating {len(tasks)} traces from {len(items)} problems and {len(variant_names)} variants.")
-    tokenizer, model = load_transformers(config)
-    gen_kwargs = generation_kwargs(config)
-    gen_kwargs.setdefault("pad_token_id", tokenizer.eos_token_id)
-    batch_size = int(config.get("generation", {}).get("batch_size", 1))
-    max_input_tokens = int(config.get("model", {}).get("max_input_tokens", 16384))
-
-    import torch
-
-    with out_path.open(mode, encoding="utf-8") as handle:
-        for batch in tqdm(list(batched(tasks, batch_size)), desc="Prompt sweep"):
-            prompts = [
-                build_prompt_text(tokenizer, task["item"], variants[task["variant"]])
-                for task in batch
-            ]
-            inputs = tokenizer(
-                prompts,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=max_input_tokens,
-            )
-            input_device = next(model.parameters()).device
-            inputs = {key: value.to(input_device) for key, value in inputs.items()}
-            with torch.no_grad():
-                outputs = model.generate(**inputs, **gen_kwargs)
-
-            prompt_width = inputs["input_ids"].shape[1]
-            for task, output in zip(batch, outputs):
-                item = task["item"]
-                new_tokens = output[prompt_width:]
-                response = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
-                assistant_prefix = str(config.get("prompt", {}).get("assistant_prefix") or "")
-                if assistant_prefix:
-                    response = assistant_prefix + response
-                generated_tokens = int(new_tokens.numel())
-                record = {
-                    "id": int(item["id"]),
-                    "is_mcq": is_mcq(item),
-                    "variant": task["variant"],
-                    "sample_index": int(task["sample_index"]),
-                    "answer_key": extract_answer_key(item, response, strict=args.answer_key_mode == "strict"),
-                    "generated_tokens": generated_tokens,
-                    "hit_token_limit": generated_tokens >= int(gen_kwargs.get("max_new_tokens", generated_tokens + 1)),
-                    "response": response,
-                }
-                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
-                handle.flush()
+    if args.backend == "vllm":
+        write_vllm_outputs(out_path, mode, tasks, variants, config, args)
+    else:
+        write_transformers_outputs(out_path, mode, tasks, variants, config, args.answer_key_mode)
 
     print(f"Wrote sweep traces to {out_path}")
 

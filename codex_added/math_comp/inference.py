@@ -115,17 +115,22 @@ def generate_vllm(items: list[dict[str, Any]], config: dict[str, Any]) -> list[d
     )
     prompts = [build_prompt_text(tokenizer, item, prompt_config) for item in items]
 
-    llm = LLM(
-        model=model_id,
-        trust_remote_code=bool(model_config.get("trust_remote_code", True)),
-        quantization=vllm_config.get("quantization"),
-        load_format=vllm_config.get("load_format", "auto"),
-        gpu_memory_utilization=float(vllm_config.get("gpu_memory_utilization", 0.50)),
-        max_model_len=int(vllm_config.get("max_model_len", model_config.get("max_input_tokens", 16384))),
-        max_num_seqs=int(vllm_config.get("max_num_seqs", 256)),
-        max_num_batched_tokens=int(vllm_config.get("max_num_batched_tokens", 32768)),
-        enable_prefix_caching=bool(vllm_config.get("enable_prefix_caching", False)),
-    )
+    llm_kwargs: dict[str, Any] = {
+        "model": model_id,
+        "trust_remote_code": bool(model_config.get("trust_remote_code", True)),
+        "dtype": vllm_config.get("dtype", model_config.get("torch_dtype", "float16")),
+        "load_format": vllm_config.get("load_format", "auto"),
+        "gpu_memory_utilization": float(vllm_config.get("gpu_memory_utilization", 0.90)),
+        "max_model_len": int(vllm_config.get("max_model_len", model_config.get("max_input_tokens", 4096))),
+        "max_num_seqs": int(vllm_config.get("max_num_seqs", 16)),
+        "max_num_batched_tokens": int(vllm_config.get("max_num_batched_tokens", 8192)),
+        "enable_prefix_caching": bool(vllm_config.get("enable_prefix_caching", True)),
+        "tensor_parallel_size": int(vllm_config.get("tensor_parallel_size", 1)),
+    }
+    quantization = vllm_config.get("quantization")
+    if quantization and str(quantization).lower() not in {"none", "false", "no"}:
+        llm_kwargs["quantization"] = quantization
+    llm = LLM(**llm_kwargs)
 
     sampling_params = SamplingParams(
         max_tokens=int(gen_config.get("max_new_tokens", 32768)),

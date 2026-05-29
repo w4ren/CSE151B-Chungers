@@ -11,11 +11,12 @@ tqdm
 transformers==4.57.3
 trl==0.19.1
 
-# DataHub already provides a CUDA-enabled torch build. Install torch separately
-# only if your environment does not already have it.
+# DataHub already provides a CUDA-enabled torch build for Transformers-only
+# workflows. vLLM pins its own Torch/CUDA stack, so install this file for vLLM
+# experiments with `uv pip install --torch-backend=auto -r codex_added/requirements.txt`.
 
 # Optional later-stage packages:
-# bitsandbytes
-vllm>=0.8.5
+bitsandbytes>=0.48.1
+vllm==0.21.0
 # ipykernel
 # jupyter
