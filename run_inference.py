@@ -13,8 +13,8 @@ REPO_ROOT = Path(__file__).resolve().parent
 DEFAULT_DATA_PATH = REPO_ROOT / "data/private.jsonl"
 DEFAULT_OUTPUT_CSV = REPO_ROOT / "submissions/final_submission.csv"
 DEFAULT_RESULTS_DIR = REPO_ROOT / "results/inference"
-DEFAULT_FRQ_ADAPTER = REPO_ROOT / "models/frq_finalizer_lora"
-DEFAULT_REBUILT_ADAPTER = REPO_ROOT / "models/rebuilt_answer_lora"
+DEFAULT_FRQ_ADAPTER = "wren88/cse151b-chungers-frq-finalizer-lora"
+DEFAULT_REBUILT_ADAPTER = "wren88/cse151b-chungers-rebuilt-answer-lora"
 
 
 def _resolve(path: str | Path) -> Path:
@@ -85,8 +85,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_CSV.relative_to(REPO_ROOT)))
     parser.add_argument("--results-dir", default=str(DEFAULT_RESULTS_DIR.relative_to(REPO_ROOT)))
     parser.add_argument("--model-id", default=None)
-    parser.add_argument("--frq-adapter", default=str(DEFAULT_FRQ_ADAPTER.relative_to(REPO_ROOT)))
-    parser.add_argument("--rebuilt-adapter", default=str(DEFAULT_REBUILT_ADAPTER.relative_to(REPO_ROOT)))
+    parser.add_argument("--frq-adapter", default=DEFAULT_FRQ_ADAPTER)
+    parser.add_argument("--rebuilt-adapter", default=DEFAULT_REBUILT_ADAPTER)
     parser.add_argument("--tensor-parallel-size", type=int, default=1)
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.90)
     parser.add_argument("--max-model-len", type=int, default=32768)

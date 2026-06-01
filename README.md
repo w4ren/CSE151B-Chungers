@@ -1,6 +1,6 @@
 # CSE 151B Competition Inference Submission
 
-This branch contains only the inference code and LoRA weights needed to reproduce the final submission pipeline.
+This branch contains the inference code and submitted LoRA weights needed to reproduce the final submission pipeline.
 
 ## Hardware and Runtime
 
@@ -10,16 +10,23 @@ This branch contains only the inference code and LoRA weights needed to reproduc
 
 ## Weights
 
-The two submitted PEFT LoRA adapters are included in this repository with Git LFS:
+The two submitted PEFT LoRA adapters are uploaded to Hugging Face Hub and are the defaults used by `run_inference()`:
+
+```text
+wren88/cse151b-chungers-frq-finalizer-lora
+wren88/cse151b-chungers-rebuilt-answer-lora
+```
+
+They are loaded on top of `Qwen/Qwen3-4B-Thinking-2507`. If the base model or adapters are not already cached, Hugging Face/vLLM will download them on first run.
+
+Local copies are also included in this repository with Git LFS:
 
 ```text
 models/frq_finalizer_lora
 models/rebuilt_answer_lora
 ```
 
-They are loaded by `run_inference()` on top of `Qwen/Qwen3-4B-Thinking-2507`. If the base model is not already cached, Hugging Face/vLLM will download it on first run.
-
-If the adapters are uploaded to Hugging Face Hub, pass those repo IDs with `--frq-adapter` and `--rebuilt-adapter`, or pass them as the matching `run_inference()` keyword arguments.
+To force local adapter loading, pass those paths with `--frq-adapter` and `--rebuilt-adapter`, or pass them as the matching `run_inference()` keyword arguments.
 
 ## Setup
 
@@ -54,8 +61,6 @@ CLI equivalent:
 python run_inference.py \
   --data data/private.jsonl \
   --output submissions/final_submission.csv \
-  --frq-adapter models/frq_finalizer_lora \
-  --rebuilt-adapter models/rebuilt_answer_lora \
   --tensor-parallel-size 4
 ```
 
@@ -71,8 +76,8 @@ id,response
 
 1. Load `Qwen/Qwen3-4B-Thinking-2507`.
 2. Generate raw reasoning with an 8k/16k/32k token ladder for rows that hit the token limit.
-3. Finalize free-response rows with `models/frq_finalizer_lora`.
-4. Finalize multiple-choice rows with `models/rebuilt_answer_lora`.
+3. Finalize free-response rows with `wren88/cse151b-chungers-frq-finalizer-lora`.
+4. Finalize multiple-choice rows with `wren88/cse151b-chungers-rebuilt-answer-lora`.
 5. Normalize responses into boxed final answers.
 6. Validate one non-empty prediction per input id and write the submission CSV.
 
