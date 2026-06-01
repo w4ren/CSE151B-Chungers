@@ -1,0 +1,5 @@
+peft==0.15.2
+huggingface_hub
+tqdm
+transformers==4.57.3
+vllm==0.21.0

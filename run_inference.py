@@ -1,138 +1,120 @@
-"""Single entry point for producing the final competition submission CSV.
-
-The heavy model generations and adapter finalization stages write a final
-prediction JSONL with one ``{"id": ..., "response": ...}`` record per private
-row. This entry point performs the final reproducible routing validation and
-CSV emission used for the submitted file.
-"""
+"""Single entry point for the competition inference pipeline."""
 
 from __future__ import annotations
 
 import argparse
-import json
-import subprocess
-import sys
 from pathlib import Path
-from typing import Any
+
+from inference_pipeline.io import validate_predictions, write_submission_csv
+from inference_pipeline.pipeline import PipelineConfig, run_model_pipeline
 
 
 REPO_ROOT = Path(__file__).resolve().parent
-CODEX_ROOT = REPO_ROOT / "codex_added"
-sys.path.insert(0, str(CODEX_ROOT))
-sys.path.insert(0, str(REPO_ROOT))
-
-from math_comp.data import index_by_id, read_jsonl  # noqa: E402
-from math_comp.submission import write_submission_csv  # noqa: E402
-
-
 DEFAULT_DATA_PATH = REPO_ROOT / "data/private.jsonl"
-DEFAULT_PREDICTIONS_PATH = (
-    REPO_ROOT / "codex_added/results/final_submission_source_20260601/combined_predictions_full_private_943.jsonl"
-)
-DEFAULT_OUTPUT_CSV = REPO_ROOT / "codex_added/submissions/final_submission.csv"
-DEFAULT_GENERATION_OUT_DIR = REPO_ROOT / "codex_added/results/run_inference_generated"
+DEFAULT_OUTPUT_CSV = REPO_ROOT / "submissions/final_submission.csv"
+DEFAULT_RESULTS_DIR = REPO_ROOT / "results/inference"
+DEFAULT_FRQ_ADAPTER = REPO_ROOT / "models/frq_finalizer_lora"
+DEFAULT_REBUILT_ADAPTER = REPO_ROOT / "models/rebuilt_answer_lora"
 
 
 def _resolve(path: str | Path) -> Path:
     path = Path(path)
-    if path.is_absolute():
-        return path
-    return REPO_ROOT / path
+    return path if path.is_absolute() else REPO_ROOT / path
 
 
-def validate_prediction_source(data_path: str | Path, predictions_path: str | Path) -> dict[str, Any]:
-    """Validate that predictions exactly cover the private ids and have responses."""
+def _adapter_ref(value: str | Path) -> str | Path:
+    """Return local adapter paths as paths and Hub repo IDs as strings."""
 
-    data_path = _resolve(data_path)
-    predictions_path = _resolve(predictions_path)
-    data = read_jsonl(data_path)
-    predictions = read_jsonl(predictions_path)
-    pred_by_id = index_by_id(predictions)
-
-    data_ids = [int(row["id"]) for row in data]
-    data_id_set = set(data_ids)
-    pred_id_set = set(pred_by_id)
-    missing = [item_id for item_id in data_ids if item_id not in pred_id_set]
-    extra = sorted(pred_id_set - data_id_set)
-    empty_response = [item_id for item_id in data_ids if not str(pred_by_id[item_id].get("response", ""))]
-
-    if missing or extra or empty_response:
-        details = {
-            "missing": missing[:20],
-            "extra": extra[:20],
-            "empty_response": empty_response[:20],
-        }
-        raise ValueError(f"Invalid prediction source for submission: {json.dumps(details, sort_keys=True)}")
-
-    return {
-        "data_path": str(data_path.relative_to(REPO_ROOT)),
-        "predictions_path": str(predictions_path.relative_to(REPO_ROOT)),
-        "rows": len(data_ids),
-        "first_id": data_ids[0] if data_ids else None,
-        "last_id": data_ids[-1] if data_ids else None,
-    }
+    if isinstance(value, Path):
+        return _resolve(value)
+    text = str(value)
+    local_candidate = _resolve(text)
+    if local_candidate.exists() or text.startswith((".", "/")):
+        return local_candidate
+    return text
 
 
 def run_inference(
     data_path: str | Path = DEFAULT_DATA_PATH,
     output_csv: str | Path = DEFAULT_OUTPUT_CSV,
-    predictions_path: str | Path = DEFAULT_PREDICTIONS_PATH,
-    generate_if_missing: bool = True,
-    generation_out_dir: str | Path = DEFAULT_GENERATION_OUT_DIR,
+    *,
+    model_id: str | None = None,
+    frq_adapter: str | Path = DEFAULT_FRQ_ADAPTER,
+    rebuilt_adapter: str | Path = DEFAULT_REBUILT_ADAPTER,
+    results_dir: str | Path = DEFAULT_RESULTS_DIR,
+    tensor_parallel_size: int = 1,
+    gpu_memory_utilization: float = 0.90,
+    max_model_len: int = 32768,
+    vllm_batch_size: int = 16,
+    predictions_path: str | Path | None = None,
 ) -> str:
-    """Write the final competition CSV and return its path.
+    """Run end-to-end inference and write an ``id,response`` CSV.
 
-    Parameters are path-like so Gradescope or a local runner can supply a
-    private JSONL path and desired output path without editing this file.
+    ``predictions_path`` is only for local validation of an already-generated
+    JSONL. Normal use leaves it unset, which loads Qwen plus the two submitted
+    LoRA adapters and runs the full generation/finalization pipeline.
     """
 
     data_path = _resolve(data_path)
     output_csv = _resolve(output_csv)
-    predictions_path = _resolve(predictions_path)
 
-    if not predictions_path.exists():
-        if not generate_if_missing:
-            raise FileNotFoundError(f"Missing final prediction source: {predictions_path}")
-        generation_out_dir = _resolve(generation_out_dir)
-        script = REPO_ROOT / "codex_added/scripts/19_run_best_pipeline.sh"
-        if not script.exists():
-            raise FileNotFoundError(f"Missing generation script: {script}")
-        command = ["bash", str(script), str(data_path), str(generation_out_dir), str(output_csv)]
-        print("Final prediction source not found; running model pipeline:")
-        print(" ".join(command))
-        subprocess.run(command, cwd=REPO_ROOT, check=True)
-        return str(output_csv)
+    if predictions_path is None:
+        config = PipelineConfig(
+            data_path=data_path,
+            results_dir=_resolve(results_dir),
+            model_id=model_id,
+            frq_adapter=_adapter_ref(frq_adapter),
+            rebuilt_adapter=_adapter_ref(rebuilt_adapter),
+            tensor_parallel_size=tensor_parallel_size,
+            gpu_memory_utilization=gpu_memory_utilization,
+            max_model_len=max_model_len,
+            vllm_batch_size=vllm_batch_size,
+        )
+        predictions_path = run_model_pipeline(config)
+    else:
+        predictions_path = _resolve(predictions_path)
 
-    summary = validate_prediction_source(data_path, predictions_path)
+    validate_predictions(data_path, predictions_path)
     write_submission_csv(data_path, predictions_path, output_csv)
-    summary["output_csv"] = str(output_csv.relative_to(REPO_ROOT))
-    print(json.dumps(summary, indent=2, sort_keys=True))
     return str(output_csv)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Produce the final id,response submission CSV.")
+    parser = argparse.ArgumentParser(description="Run inference and produce the final submission CSV.")
     parser.add_argument("--data", default=str(DEFAULT_DATA_PATH.relative_to(REPO_ROOT)))
-    parser.add_argument("--predictions", default=str(DEFAULT_PREDICTIONS_PATH.relative_to(REPO_ROOT)))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_CSV.relative_to(REPO_ROOT)))
-    parser.add_argument("--generation-out-dir", default=str(DEFAULT_GENERATION_OUT_DIR.relative_to(REPO_ROOT)))
+    parser.add_argument("--results-dir", default=str(DEFAULT_RESULTS_DIR.relative_to(REPO_ROOT)))
+    parser.add_argument("--model-id", default=None)
+    parser.add_argument("--frq-adapter", default=str(DEFAULT_FRQ_ADAPTER.relative_to(REPO_ROOT)))
+    parser.add_argument("--rebuilt-adapter", default=str(DEFAULT_REBUILT_ADAPTER.relative_to(REPO_ROOT)))
+    parser.add_argument("--tensor-parallel-size", type=int, default=1)
+    parser.add_argument("--gpu-memory-utilization", type=float, default=0.90)
+    parser.add_argument("--max-model-len", type=int, default=32768)
+    parser.add_argument("--vllm-batch-size", type=int, default=16)
     parser.add_argument(
-        "--no-generate-if-missing",
-        action="store_true",
-        help="Fail instead of invoking the model pipeline when the final prediction JSONL is missing.",
+        "--predictions",
+        default=None,
+        help="Optional generated predictions JSONL for local CSV validation.",
     )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    run_inference(
+    output = run_inference(
         data_path=args.data,
         output_csv=args.output,
+        model_id=args.model_id,
+        frq_adapter=args.frq_adapter,
+        rebuilt_adapter=args.rebuilt_adapter,
+        results_dir=args.results_dir,
+        tensor_parallel_size=args.tensor_parallel_size,
+        gpu_memory_utilization=args.gpu_memory_utilization,
+        max_model_len=args.max_model_len,
+        vllm_batch_size=args.vllm_batch_size,
         predictions_path=args.predictions,
-        generate_if_missing=not args.no_generate_if_missing,
-        generation_out_dir=args.generation_out_dir,
     )
+    print(f"Wrote submission CSV to {output}")
 
 
 if __name__ == "__main__":
