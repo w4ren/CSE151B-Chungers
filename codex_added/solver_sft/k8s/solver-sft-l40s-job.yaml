@@ -1,0 +1,87 @@
+# Added by Codex: Kubernetes Job for 2x L40S solver QLoRA SFT.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: qwen3-solver-sft-l40s
+  namespace: ai-md
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: qwen3-solver-sft-l40s
+    spec:
+      restartPolicy: Never
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: nvidia.com/gpu.product
+                    operator: In
+                    values:
+                      - NVIDIA-L40S
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: PreferNoSchedule
+      containers:
+        - name: train
+          image: ncking/bige:latest
+          imagePullPolicy: Always
+          workingDir: /home/mnt/BiomechAI/Wenhao/archive2/CSE151B-Chungers-wenhao-lfs
+          command:
+            - /bin/bash
+            - -lc
+          args:
+            - |
+              set -euo pipefail
+              export REPO_ROOT="$PWD"
+              export PIP_CACHE_DIR="$REPO_ROOT/.pip-cache"
+              export UV_CACHE_DIR="$REPO_ROOT/.uv-cache"
+              export UV_PYTHON_INSTALL_DIR="$REPO_ROOT/.uv-python"
+              export HF_HOME="$REPO_ROOT/.hf-cache"
+              export HF_HUB_CACHE="$HF_HOME/hub"
+              export HF_DATASETS_CACHE="$HF_HOME/datasets"
+              export HF_HUB_ENABLE_HF_TRANSFER=1
+              export XDG_CACHE_HOME="$REPO_ROOT/.cache"
+              export TMPDIR="$REPO_ROOT/.tmp"
+              export TRITON_CACHE_DIR="$REPO_ROOT/.triton-cache"
+              export TORCHINDUCTOR_CACHE_DIR="$REPO_ROOT/.torchinductor-cache"
+              export TOKENIZERS_PARALLELISM=false
+              export CUDA_MODULE_LOADING=LAZY
+              export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+              mkdir -p "$PIP_CACHE_DIR" "$UV_CACHE_DIR" "$UV_PYTHON_INSTALL_DIR" "$HF_HOME" "$HF_DATASETS_CACHE" "$XDG_CACHE_HOME" "$TMPDIR" "$TRITON_CACHE_DIR" "$TORCHINDUCTOR_CACHE_DIR"
+
+              python3 -m pip install --prefix "$REPO_ROOT/.uv-local" uv
+              export PATH="$REPO_ROOT/.uv-local/bin:$PATH"
+              uv venv "$REPO_ROOT/.venv-solver-sft" --python 3.11 --seed
+              source "$REPO_ROOT/.venv-solver-sft/bin/activate"
+              uv pip install --upgrade pip
+              uv pip install --torch-backend=auto                 "torch"                 "accelerate==1.13.0"                 "antlr4-python3-runtime==4.11.1"                 "bitsandbytes>=0.48.1"                 "datasets>=2.20.0"                 "hf_transfer>=0.1.8"                 "numpy"                 "peft==0.15.2"                 "PyYAML"                 "sympy"                 "tqdm"                 "transformers==4.57.3"                 "trl==0.19.1"
+
+              python codex_added/solver_sft/prepare_sft_data.py                 --config codex_added/solver_sft/configs/full_8k_l40s.yaml
+
+              accelerate launch --num_processes 2 codex_added/solver_sft/train_solver_sft.py                 --config codex_added/solver_sft/configs/full_8k_l40s.yaml
+          resources:
+            requests:
+              cpu: "16"
+              memory: 64Gi
+              nvidia.com/gpu: "2"
+            limits:
+              cpu: "16"
+              memory: 64Gi
+              nvidia.com/gpu: "2"
+          volumeMounts:
+            - name: biomech-ai
+              mountPath: /home/mnt
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: biomech-ai
+          persistentVolumeClaim:
+            claimName: biomech-ai
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Gi

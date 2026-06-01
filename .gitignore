@@ -32,4 +32,4 @@ codex_added/solver_sft/results/
 
 # Local/private competition artifacts and audits. Keep these out of public pushes.
 private*
-codex_added/scripts/audit_private_leaky_*.py
+codex_added/scripts/audit_frq_lora_adapter_with_mcq_lora_adapter_*.py

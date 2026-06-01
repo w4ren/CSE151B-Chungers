@@ -1,0 +1,33 @@
+{
+  "accuracy_slope_last_100_per_step": 1.4062334190717058e-06,
+  "checkpoints": [
+    "codex_added/solver_sft/adapters/solver_sft_lora/checkpoint-100",
+    "codex_added/solver_sft/adapters/solver_sft_lora/checkpoint-200",
+    "codex_added/solver_sft/adapters/solver_sft_lora/checkpoint-300",
+    "codex_added/solver_sft/adapters/solver_sft_lora/checkpoint-400"
+  ],
+  "epoch": 0.18225310399817746,
+  "first_loss": 1.3063,
+  "first_mean_token_accuracy": 0.7286035113036633,
+  "first_step": 10,
+  "global_step": 400,
+  "has_eval_accuracy": false,
+  "has_eval_loss": false,
+  "last_loss": 0.3856,
+  "last_mean_token_accuracy": 0.8826226517558098,
+  "last_step": 400,
+  "loss_slope_last_100_per_step": -4.090909090909095e-06,
+  "max_mean_token_accuracy": 0.8870431065559388,
+  "max_mean_token_accuracy_step": 320,
+  "max_steps": 2195,
+  "mean_loss_first_100_steps": 0.6354299999999999,
+  "mean_loss_last_100_steps_300_400": 0.39436363636363636,
+  "mean_loss_prev_100_steps_200_300": 0.40985454545454536,
+  "mean_token_accuracy_first_100_steps": 0.8350471617281437,
+  "mean_token_accuracy_last_100_steps_300_400": 0.8807557444003495,
+  "mean_token_accuracy_prev_100_steps_200_300": 0.8774250430816953,
+  "min_loss": 0.3634,
+  "min_loss_step": 320,
+  "num_logged_points": 40,
+  "source_trainer_state": "codex_added/solver_sft/adapters/solver_sft_lora/checkpoint-400/trainer_state.json"
+}

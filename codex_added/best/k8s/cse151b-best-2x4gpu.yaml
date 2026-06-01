@@ -1,0 +1,433 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cse151b-best-prepare-splits
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: cse151b-best-2x4gpu
+        shard-job: prepare
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: cse151b-best-prepare-splits
+        image: ncking/bige:latest
+        imagePullPolicy: Always
+        workingDir: /home/mnt/BiomechAI/Wenhao/151B_SP26_Competition
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: CSE151B_ROOT
+          value: /home/mnt/BiomechAI/Wenhao/151B_SP26_Competition
+        - name: DATA_PATH
+          value: data/private.jsonl
+        - name: SPLIT_DIR
+          value: codex_added/job_data
+        - name: SPLIT_PREFIX
+          value: private
+        - name: NUM_JOBS
+          value: "2"
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          set -eo pipefail
+          if command -v conda >/dev/null 2>&1; then
+            eval "$(conda shell.bash hook)"
+            set +u
+            conda activate BIGE || conda activate base
+            set -u
+          fi
+
+          cd "${CSE151B_ROOT}"
+          python codex_added/scripts/22_split_jsonl_for_jobs.py \
+            --data "${DATA_PATH}" \
+            --out-dir "${SPLIT_DIR}" \
+            --prefix "${SPLIT_PREFIX}" \
+            --num-jobs "${NUM_JOBS}"
+        resources:
+          limits:
+            memory: 32Gi
+            cpu: "8"
+          requests:
+            memory: 16Gi
+            cpu: "4"
+        volumeMounts:
+        - name: biomech-ai
+          mountPath: /home/mnt
+        - name: biomech-ai
+          mountPath: /mnt
+        - name: dshm
+          mountPath: /dev/shm
+      volumes:
+      - name: biomech-ai
+        persistentVolumeClaim:
+          claimName: biomech-ai
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 16Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cse151b-best-job0
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: cse151b-best-2x4gpu
+        shard-job: job0
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: cse151b-best-job0
+        image: ncking/bige:latest
+        imagePullPolicy: Always
+        workingDir: /home/mnt/BiomechAI/Wenhao/151B_SP26_Competition
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: PYTORCH_CUDA_ALLOC_CONF
+          value: "expandable_segments:True,max_split_size_mb:256"
+        - name: TOKENIZERS_PARALLELISM
+          value: "false"
+        - name: HF_HOME
+          value: /home/mnt/BiomechAI/Wenhao/.cache/huggingface
+        - name: TRANSFORMERS_CACHE
+          value: /home/mnt/BiomechAI/Wenhao/.cache/huggingface/transformers
+        - name: CSE151B_ROOT
+          value: /home/mnt/BiomechAI/Wenhao/151B_SP26_Competition
+        - name: FULL_DATA_PATH
+          value: data/private.jsonl
+        - name: DATA_PATH
+          value: codex_added/job_data/private_job0.jsonl
+        - name: OUT_DIR
+          value: codex_added/results/best_private_job0
+        - name: SUBMISSION_PATH
+          value: codex_added/submissions/best_submission_job0_unused.csv
+        - name: ADAPTER_DIR
+          value: codex_added/models/qwen3_answer_format_lora
+        - name: GPUS
+          value: "0,1,2,3"
+        - name: NUM_SHARDS
+          value: "4"
+        - name: SCORE
+          value: "0"
+        - name: WRITE_SUBMISSION
+          value: "0"
+        - name: WAIT_SECONDS
+          value: "86400"
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          set -eo pipefail
+          if command -v conda >/dev/null 2>&1; then
+            eval "$(conda shell.bash hook)"
+            set +u
+            conda activate BIGE || conda activate base
+            set -u
+          fi
+
+          cd "${CSE151B_ROOT}"
+          chmod +x codex_added/scripts/19_run_best_pipeline.sh codex_added/scripts/20_run_best_pipeline_8gpu.sh
+
+          waited=0
+          while [[ ! -f "${DATA_PATH}" ]]; do
+            if [[ "${waited}" -ge "${WAIT_SECONDS}" ]]; then
+              echo "Timed out waiting for split data: ${DATA_PATH}" >&2
+              exit 1
+            fi
+            echo "Waiting for split data ${DATA_PATH}: waited=${waited}s"
+            sleep 60
+            waited=$((waited + 60))
+          done
+
+          echo "Starting CSE151B best pipeline job0"
+          echo "full_data_path=${FULL_DATA_PATH}"
+          echo "data_path=${DATA_PATH}"
+          echo "out_dir=${OUT_DIR}"
+          echo "adapter_dir=${ADAPTER_DIR}"
+          echo "chunk_rows=$(wc -l < "${DATA_PATH}")"
+          echo "gpus=${GPUS}"
+          echo "num_shards=${NUM_SHARDS}"
+          echo "cuda_visible_devices=${CUDA_VISIBLE_DEVICES:-managed_by_k8s_device_plugin}"
+
+          codex_added/scripts/20_run_best_pipeline_8gpu.sh \
+            "${DATA_PATH}" \
+            "${OUT_DIR}" \
+            "${SUBMISSION_PATH}"
+
+          {
+            echo "job=cse151b-best-job0"
+            echo "full_data_path=${FULL_DATA_PATH}"
+            echo "data_path=${DATA_PATH}"
+            echo "out_dir=${OUT_DIR}"
+            echo "adapter_dir=${ADAPTER_DIR}"
+            echo "chunk_rows=$(wc -l < "${DATA_PATH}")"
+            echo "gpus=${GPUS}"
+            echo "num_shards=${NUM_SHARDS}"
+            echo "completed_at=$(date -Iseconds)"
+          } > "${OUT_DIR}/K8S_RUN_INFO.txt"
+        resources:
+          limits:
+            nvidia.com/gpu: 4
+            memory: 256Gi
+            cpu: "32"
+          requests:
+            nvidia.com/gpu: 4
+            memory: 256Gi
+            cpu: "32"
+        volumeMounts:
+        - name: biomech-ai
+          mountPath: /home/mnt
+        - name: biomech-ai
+          mountPath: /mnt
+        - name: dshm
+          mountPath: /dev/shm
+      volumes:
+      - name: biomech-ai
+        persistentVolumeClaim:
+          claimName: biomech-ai
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 128Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cse151b-best-job1
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: cse151b-best-2x4gpu
+        shard-job: job1
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: cse151b-best-job1
+        image: ncking/bige:latest
+        imagePullPolicy: Always
+        workingDir: /home/mnt/BiomechAI/Wenhao/151B_SP26_Competition
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: PYTORCH_CUDA_ALLOC_CONF
+          value: "expandable_segments:True,max_split_size_mb:256"
+        - name: TOKENIZERS_PARALLELISM
+          value: "false"
+        - name: HF_HOME
+          value: /home/mnt/BiomechAI/Wenhao/.cache/huggingface
+        - name: TRANSFORMERS_CACHE
+          value: /home/mnt/BiomechAI/Wenhao/.cache/huggingface/transformers
+        - name: CSE151B_ROOT
+          value: /home/mnt/BiomechAI/Wenhao/151B_SP26_Competition
+        - name: FULL_DATA_PATH
+          value: data/private.jsonl
+        - name: DATA_PATH
+          value: codex_added/job_data/private_job1.jsonl
+        - name: OUT_DIR
+          value: codex_added/results/best_private_job1
+        - name: SUBMISSION_PATH
+          value: codex_added/submissions/best_submission_job1_unused.csv
+        - name: ADAPTER_DIR
+          value: codex_added/models/qwen3_answer_format_lora
+        - name: GPUS
+          value: "0,1,2,3"
+        - name: NUM_SHARDS
+          value: "4"
+        - name: SCORE
+          value: "0"
+        - name: WRITE_SUBMISSION
+          value: "0"
+        - name: WAIT_SECONDS
+          value: "86400"
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          set -eo pipefail
+          if command -v conda >/dev/null 2>&1; then
+            eval "$(conda shell.bash hook)"
+            set +u
+            conda activate BIGE || conda activate base
+            set -u
+          fi
+
+          cd "${CSE151B_ROOT}"
+          chmod +x codex_added/scripts/19_run_best_pipeline.sh codex_added/scripts/20_run_best_pipeline_8gpu.sh
+
+          waited=0
+          while [[ ! -f "${DATA_PATH}" ]]; do
+            if [[ "${waited}" -ge "${WAIT_SECONDS}" ]]; then
+              echo "Timed out waiting for split data: ${DATA_PATH}" >&2
+              exit 1
+            fi
+            echo "Waiting for split data ${DATA_PATH}: waited=${waited}s"
+            sleep 60
+            waited=$((waited + 60))
+          done
+
+          echo "Starting CSE151B best pipeline job1"
+          echo "full_data_path=${FULL_DATA_PATH}"
+          echo "data_path=${DATA_PATH}"
+          echo "out_dir=${OUT_DIR}"
+          echo "adapter_dir=${ADAPTER_DIR}"
+          echo "chunk_rows=$(wc -l < "${DATA_PATH}")"
+          echo "gpus=${GPUS}"
+          echo "num_shards=${NUM_SHARDS}"
+          echo "cuda_visible_devices=${CUDA_VISIBLE_DEVICES:-managed_by_k8s_device_plugin}"
+
+          codex_added/scripts/20_run_best_pipeline_8gpu.sh \
+            "${DATA_PATH}" \
+            "${OUT_DIR}" \
+            "${SUBMISSION_PATH}"
+
+          {
+            echo "job=cse151b-best-job1"
+            echo "full_data_path=${FULL_DATA_PATH}"
+            echo "data_path=${DATA_PATH}"
+            echo "out_dir=${OUT_DIR}"
+            echo "adapter_dir=${ADAPTER_DIR}"
+            echo "chunk_rows=$(wc -l < "${DATA_PATH}")"
+            echo "gpus=${GPUS}"
+            echo "num_shards=${NUM_SHARDS}"
+            echo "completed_at=$(date -Iseconds)"
+          } > "${OUT_DIR}/K8S_RUN_INFO.txt"
+        resources:
+          limits:
+            nvidia.com/gpu: 4
+            memory: 256Gi
+            cpu: "32"
+          requests:
+            nvidia.com/gpu: 4
+            memory: 256Gi
+            cpu: "32"
+        volumeMounts:
+        - name: biomech-ai
+          mountPath: /home/mnt
+        - name: biomech-ai
+          mountPath: /mnt
+        - name: dshm
+          mountPath: /dev/shm
+      volumes:
+      - name: biomech-ai
+        persistentVolumeClaim:
+          claimName: biomech-ai
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 128Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cse151b-best-merge
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: cse151b-best-2x4gpu
+        shard-job: merge
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: cse151b-best-merge
+        image: ncking/bige:latest
+        imagePullPolicy: Always
+        workingDir: /home/mnt/BiomechAI/Wenhao/151B_SP26_Competition
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: CSE151B_ROOT
+          value: /home/mnt/BiomechAI/Wenhao/151B_SP26_Competition
+        - name: DATA_PATH
+          value: data/private.jsonl
+        - name: JOB0_SELECTED
+          value: codex_added/results/best_private_job0/selected.jsonl
+        - name: JOB1_SELECTED
+          value: codex_added/results/best_private_job1/selected.jsonl
+        - name: MERGED_SELECTED
+          value: codex_added/results/best_private_merged/selected.jsonl
+        - name: SUBMISSION_PATH
+          value: codex_added/submissions/best_submission.csv
+        - name: WAIT_SECONDS
+          value: "86400"
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          set -eo pipefail
+          if command -v conda >/dev/null 2>&1; then
+            eval "$(conda shell.bash hook)"
+            set +u
+            conda activate BIGE || conda activate base
+            set -u
+          fi
+
+          cd "${CSE151B_ROOT}"
+
+          waited=0
+          while [[ ! -f "${JOB0_SELECTED}" || ! -f "${JOB1_SELECTED}" ]]; do
+            if [[ "${waited}" -ge "${WAIT_SECONDS}" ]]; then
+              echo "Timed out waiting for shard outputs." >&2
+              echo "job0=${JOB0_SELECTED}"
+              echo "job1=${JOB1_SELECTED}"
+              exit 1
+            fi
+            echo "Waiting for shard outputs: waited=${waited}s"
+            sleep 60
+            waited=$((waited + 60))
+          done
+
+          python codex_added/scripts/21_merge_shard_predictions.py \
+            --data "${DATA_PATH}" \
+            --output "${MERGED_SELECTED}" \
+            --predictions "${JOB0_SELECTED}" "${JOB1_SELECTED}"
+
+          python codex_added/scripts/make_submission.py \
+            --data "${DATA_PATH}" \
+            --predictions "${MERGED_SELECTED}" \
+            --output "${SUBMISSION_PATH}"
+
+          {
+            echo "job=cse151b-best-merge"
+            echo "data_path=${DATA_PATH}"
+            echo "job0_selected=${JOB0_SELECTED}"
+            echo "job1_selected=${JOB1_SELECTED}"
+            echo "merged_selected=${MERGED_SELECTED}"
+            echo "submission_path=${SUBMISSION_PATH}"
+            echo "completed_at=$(date -Iseconds)"
+          } > "$(dirname "${MERGED_SELECTED}")/K8S_RUN_INFO.txt"
+
+          echo "Done. Submission is at ${SUBMISSION_PATH}"
+        resources:
+          limits:
+            memory: 32Gi
+            cpu: "8"
+          requests:
+            memory: 16Gi
+            cpu: "4"
+        volumeMounts:
+        - name: biomech-ai
+          mountPath: /home/mnt
+        - name: biomech-ai
+          mountPath: /mnt
+        - name: dshm
+          mountPath: /dev/shm
+      volumes:
+      - name: biomech-ai
+        persistentVolumeClaim:
+          claimName: biomech-ai
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 16Gi
