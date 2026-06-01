@@ -26,7 +26,7 @@ models/frq_finalizer_lora
 models/rebuilt_answer_lora
 ```
 
-To force local adapter loading, pass those paths with `--frq-adapter` and `--rebuilt-adapter`, or pass them as the matching `run_inference()` keyword arguments.
+No manual weight placement is required when using the default entry point. `run_inference()` loads the Hugging Face Hub adapters above and lets Hugging Face/vLLM download the base model if needed.
 
 ## Setup
 
@@ -49,20 +49,16 @@ Python entry point:
 ```python
 from run_inference import run_inference
 
-run_inference(
-    data_path="data/private.jsonl",
-    output_csv="submissions/final_submission.csv",
-)
+run_inference()
 ```
 
 CLI equivalent:
 
 ```bash
-python run_inference.py \
-  --data data/private.jsonl \
-  --output submissions/final_submission.csv \
-  --tensor-parallel-size 4
+python run_inference.py
 ```
+
+`run_inference()` takes no arguments. It reads `data/private.jsonl` and writes `final_submission.csv` to the current working directory.
 
 The output CSV has the required columns:
 
